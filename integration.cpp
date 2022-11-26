@@ -1,7 +1,7 @@
-#include <random>
-#include <iostream>
-#include <chrono>
-#include <array>
+#include<random>
+#include<iostream>
+#include<chrono>
+#include<array>
 #include<functional>
 
 // Create an hyper rectangle distribution
@@ -15,10 +15,15 @@ std::vector<std::uniform_real_distribution<double>> generate_hr_dist(std::vector
     return hr_dis;
 }
 
+// TODO Study between spherical coordinates vs trial-error
+std::vector<double> random_vector_hs(std::vector<double> center, double radius, std::default_random_engine &eng){
+
+}
+
 // Returns a single random vector within an hyper rectangle
 //! @param hr_dist vector of distributions
 //! @return random vector of size n inside
-std::vector<double> random_vector(std::vector<std::uniform_real_distribution<double>> &hr_dis, std::default_random_engine &eng){
+std::vector<double> random_vector_hr(std::vector<std::uniform_real_distribution<double>> &hr_dis, std::default_random_engine &eng){
     std::vector<double> rv; //random vector
     for(int i = 0; i < hr_dis.size(); i++){
         rv.emplace_back(hr_dis[i](eng));
@@ -45,7 +50,7 @@ double MonteCarlo_integral_hr(std::function<double (std::vector<double>)> const 
     double area = hr_hv(boundaries);
     double value;
     for(int i = 0; i < sample_size; i++){
-        value += f(random_vector(hr_dis, eng));
+        value += f(random_vector_hr(hr_dis, eng));
     }
     value = value * area / sample_size;
     return value;
