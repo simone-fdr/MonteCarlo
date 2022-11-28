@@ -6,7 +6,71 @@
 #include <math.h>
 
 
+/* Domande al prof:
+    Quanto perdo di efficenza se metto tutto quanto con V<double> al posto di std::vector<double>?
+
+
+*/
+// Everything is done with doubles for simplicity, but can be done with templates 
+
 // ================ VECTOR UTILS =======================
+
+template<typename T>
+class V{
+    public: 
+    std::vector<T> v;
+    V<T>(std::vector<T> _v): v{_v} {}
+
+    V<T>& operator += (const V<T>& rhs){
+        for(int i = 0; i< v.size(); i++){
+            this->v[i] += rhs.v[i];
+        }
+        return *this;
+    } 
+
+    V<T> operator + (V<T> const &r){
+        V<T> tmp = *this;
+        tmp+=r;
+        return tmp;
+    }
+
+    V<T>& operator -= (const V<T>& rhs){
+        for(int i = 0; i< v.size(); i++){
+            this->v[i] -= rhs.v[i];
+        }
+        return *this;
+    } 
+
+    V<T> operator - (V<T> const &r){
+        V<T> tmp = *this;
+        tmp-=r;
+        return tmp;
+    }
+
+    //Per scalar product
+    V<T> operator* (T a){
+        V<T> tmp = *this;
+        for(int i = 0; i< v.size(); i++){
+            tmp.v[i] *= a;
+        }
+        return tmp;
+    }
+
+    T & operator[] (int i){
+        return this->v[i];
+    }
+
+    T operator[] (int i) const{
+        return this->v[i];
+    }
+
+    int size(){
+        return this->v.size();
+    }
+
+};
+
+
 void print_vector(std::vector<double> x){
     for(auto el : x){
         std::cout << " " << el;
@@ -23,6 +87,13 @@ double norm_vector(std::vector<double> v){
     return norm;    
 }
 
+double norm_vector(V<double> v){
+    double norm = 0;
+    for(int i = 0; i < v.size(); i++){
+        norm += v[i] * v[i];
+    }
+    return norm; 
+}
 // ============== HYPER RECTANGLE ===================
 
 // Create an hyper rectangle distribution
@@ -54,7 +125,7 @@ double hr_hv(std::vector<double> &boundaries){
     return hv;
 }
 
-// ================== HYPER SPHERE =======================
+// ================== HYPER BALL =======================
 
 //! @param c center
 //! @param r radius
@@ -89,10 +160,11 @@ std::vector<double> random_vector_hb(std::vector<double> c, double r, std::defau
     return rv;
 }
 
+// It's very inefficient for n>>0
 //! @param c center
 //! @param r radius
 //! @return random vector within hyperball
-std::vector<double> random_vector_hb_inefficent(std::vector<double> c, double r, std::default_random_engine &eng){
+std::vector<double> random_vector_hb_inefficient(std::vector<double> c, double r, std::default_random_engine &eng){
     std::vector<double> rv;
     std::uniform_real_distribution<double> dis(-1,1);
     do{
@@ -115,6 +187,10 @@ double gamma(double n){
     return gamma(n-1)*(n-1);
 }
 
+//For low dimension it uses recursive definition, otherwise it use Stirling approximation
+//! @param r radius
+//! @param n dimension
+//! @return hypervolume of hyperball
 double hb_hv(double r, double n){
     // TODO choose a better threshold
     if(n > 20){
@@ -122,6 +198,40 @@ double hb_hv(double r, double n){
     }
     return std::pow(r,n)*std::pow(M_PI, n/2.)/gamma(n/2. + 1);
 }
+
+// ============================ HYPER POLYTOPES ======================
+
+// insight: Prendo il politopo, lo divido in hyper-triangoli e ne scelgo uno a caso pensandolo in base al volume.
+// https://mathworld.wolfram.com/TrianglePointPicking.html
+// Hypertriangle: lo prendo e lo traslo con un vertice all'origine, gli e faccio una combinazione lineare degli altri vertici, metà sono nel triangolo
+// quindi scelgo poi se tagliare o ribaltare (probabilmente la seconda)
+
+std::vector<double> random_vector_ht(std::vector<V<double>> vs, std::default_random_engine &eng){
+    //Inefficent check
+    if(vs.size() != (vs[0].size() + 1)){
+        std::cout << "Wrong dimension for HyperTriangle" << std::endl;
+        return vs[0].v;
+    }
+    V<double> rv = vs[0];
+    V<double> sum = vs[0];
+    std::uniform_real_distribution<double> dis(0,1);
+    double a;
+    do{
+        sum = rv = vs[0];
+        for(int i = 1; i < vs.size(); i++){
+            a = dis(eng);
+            rv += (vs[i] - vs[0]) * a;
+        }
+    // Is it in the right half
+        for(int i = 1; i < vs.size(); i++){
+                sum += vs[i] - vs[0];
+        }
+    // Actually IDK if this is the right check
+    // I shall do something with each coordinate and studying taking in consideration the cosine of the angle between...in nD
+    }while(norm_vector(rv - vs[0]) > norm_vector(sum - vs[0]) / 2.);
+    return rv.v;
+}
+
 
 // ======================== MONTECARLO INTEGRALS ===================
 
@@ -147,7 +257,7 @@ double MonteCarlo_integral_hb(std::function<double (std::vector<double>)> const 
     double area = hb_hv(r, c.size());
     double value;
     for(int i = 0; i < sample_size; i++){
-        value += f(random_vector_hb_inefficent(c,r,eng));
+        value += f(random_vector_hb(c,r,eng));
     }
     value = value * area / sample_size;
     return value;
@@ -178,12 +288,23 @@ int main(int argc, char ** argv){
     std::vector<double> center{3, 4, 5};
     double radius = 2;
     
-    auto start = std::chrono::high_resolution_clock::now();
+    /*auto start = std::chrono::high_resolution_clock::now();
     double integral = MonteCarlo_integral_hb(produttoria, center, radius, sample_size, eng);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);  
     std::cout << "L'integrale vale " << integral << std::endl;
-    std::cout << "In " << duration.count()  << " millisecondi" << std::endl;
+    std::cout << "In " << duration.count()  << " millisecondi" << std::endl;*/
+
+    std::vector<double> rv;
+    V<double> v0{std::vector<double>{0,0}};
+    V<double> v1{std::vector<double>{1,0}};
+    V<double> v2{std::vector<double>{0,1}};
+    std::vector<V<double>> vs{v0,v1,v2};
+    for(int k = 0; k < 10; k++){
+        rv = random_vector_ht(vs, eng);
+        print_vector(rv);
+        std::cout << std::endl;
+    }
 
     return 0;
 }
