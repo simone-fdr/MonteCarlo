@@ -56,6 +56,15 @@ class V{
         return tmp;
     }
 
+    //Adding scalar elementwise
+    V<T> operator+ (T a){
+        V<T> tmp = *this;
+        for(int i = 0; i< v.size(); i++){
+            tmp.v[i] += a;
+        }
+        return tmp;
+    }
+
     T & operator[] (int i){
         return this->v[i];
     }
@@ -207,28 +216,49 @@ double hb_hv(double r, double n){
 // quindi scelgo poi se tagliare o ribaltare (probabilmente la seconda)
 
 std::vector<double> random_vector_ht(std::vector<V<double>> vs, std::default_random_engine &eng){
+    int i,j;
     //Inefficent check
     if(vs.size() != (vs[0].size() + 1)){
         std::cout << "Wrong dimension for HyperTriangle" << std::endl;
         return vs[0].v;
     }
     V<double> rv = vs[0];
-    V<double> sum = vs[0];
     std::uniform_real_distribution<double> dis(0,1);
-    double a;
-    do{
-        sum = rv = vs[0];
-        for(int i = 1; i < vs.size(); i++){
-            a = dis(eng);
-            rv += (vs[i] - vs[0]) * a;
+    std::vector<double> as;
+    rv = vs[0];
+    // a has size n-1
+    for(i = 1; i < vs.size(); i++){
+        as.emplace_back(dis(eng));
+    }
+    // Check in inside triangle or inside parallelogram
+    double sum = 0;
+    for(auto a:as){
+        sum += a;
+    }
+    // Il the conic combination exceed the convex combination
+    if(sum > 1){
+        //print_vector(as);
+        // Reflection by the plane a1+a2+...+an=1
+        double t = 1;
+        for(auto a:as){
+            t-=a;
         }
-    // Is it in the right half
-        for(int i = 1; i < vs.size(); i++){
-                sum += vs[i] - vs[0];
+        t /= as.size();
+        for(auto &a:as){
+            a = a + 2*t;
         }
-    // Actually IDK if this is the right check
-    // I shall do something with each coordinate and studying taking in consideration the cosine of the angle between...in nD
-    }while(norm_vector(rv - vs[0]) > norm_vector(sum - vs[0]) / 2.);
+    }
+    /*
+    Baricentric coordinates like http://vcg.isti.cnr.it/jgt/tetra.htm
+    b = 1;
+    for(int i = 0; i < a.size(); i++){
+        b-=a[i];
+    }
+    */
+    //Check if it is correct while traslated
+    for(i = 1; i < vs.size(); i++){
+        rv += (vs[i] - vs[0]) * as[i-1];
+    }
     return rv.v;
 }
 
