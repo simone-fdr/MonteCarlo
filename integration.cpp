@@ -34,6 +34,20 @@ class V{
         return tmp;
     }
 
+    //Adding scalar elementwise
+    V<T>& operator += (T a){
+        for(int i = 0; i< v.size(); i++){
+            this->v[i] += a;
+        }
+        return *this;
+    } 
+
+    V<T> operator+ (T a){
+        V<T> tmp = *this;
+        tmp+=a;
+        return tmp;
+    }
+
     V<T>& operator -= (const V<T>& rhs){
         for(int i = 0; i< v.size(); i++){
             this->v[i] -= rhs.v[i];
@@ -47,20 +61,25 @@ class V{
         return tmp;
     }
 
+    //Adding scalar elementwise
+    V<T>& operator-= (T a){
+        for(int i = 0; i< v.size(); i++){
+            this->v[i] -= a;
+        }
+        return *this;
+    }
+
+    V<T> operator - (T a){
+        V<T> tmp = *this;
+        tmp-=a;
+        return tmp;
+    }
+
     //Per scalar product
     V<T> operator* (T a){
         V<T> tmp = *this;
         for(int i = 0; i< v.size(); i++){
             tmp.v[i] *= a;
-        }
-        return tmp;
-    }
-
-    //Adding scalar elementwise
-    V<T> operator+ (T a){
-        V<T> tmp = *this;
-        for(int i = 0; i< v.size(); i++){
-            tmp.v[i] += a;
         }
         return tmp;
     }
@@ -215,6 +234,31 @@ double hb_hv(double r, double n){
 // Hypertriangle: lo prendo e lo traslo con un vertice all'origine, gli e faccio una combinazione lineare degli altri vertici, metà sono nel triangolo
 // quindi scelgo poi se tagliare o ribaltare (probabilmente la seconda)
 
+double det(V<V<double>> m){
+    double det = 1;
+    for (int c = 0; c < m.size(); c++)
+    {
+         det = det*m[c][c];
+        for (int r = c + 1; r < m.size(); r++)
+        {
+            double ratio = m[r][c] / m[c][c];
+            for (int k = c; k < m.size(); k++)
+            {
+                m[r][k] = m[r][k] - ratio * m[c][k];
+            }
+        }
+    }
+    return det;
+}
+
+double ht_hv(std::vector<V<double>> vs){
+    V<V<double>> m{vs};
+    V<double> v0 = m[0];
+    m.v.erase(vs.begin());
+    m -= v0;
+    return 1./gamma(v0.size() + 1) * det(m); //https://en.wikipedia.org/wiki/Simplex#Volume
+}
+
 std::vector<double> random_vector_ht(std::vector<V<double>> vs, std::default_random_engine &eng){
     int i,j;
     //Inefficent check
@@ -230,14 +274,13 @@ std::vector<double> random_vector_ht(std::vector<V<double>> vs, std::default_ran
     for(i = 1; i < vs.size(); i++){
         as.emplace_back(dis(eng));
     }
-    // Check in inside triangle or inside parallelogram
+    // Check in inside triangle or not
     double sum = 0;
     for(auto a:as){
         sum += a;
     }
     // Il the conic combination exceed the convex combination
     if(sum > 1){
-        //print_vector(as);
         // Reflection by the plane a1+a2+...+an=1
         double t = 1;
         for(auto a:as){
@@ -248,19 +291,13 @@ std::vector<double> random_vector_ht(std::vector<V<double>> vs, std::default_ran
             a = a + 2*t;
         }
     }
-    /*
-    Baricentric coordinates like http://vcg.isti.cnr.it/jgt/tetra.htm
-    b = 1;
-    for(int i = 0; i < a.size(); i++){
-        b-=a[i];
-    }
-    */
-    //Check if it is correct while traslated
     for(i = 1; i < vs.size(); i++){
         rv += (vs[i] - vs[0]) * as[i-1];
     }
     return rv.v;
 }
+
+// TODO Implement division of polytopes in simplexes
 
 
 // ======================== MONTECARLO INTEGRALS ===================
@@ -326,15 +363,12 @@ int main(int argc, char ** argv){
     std::cout << "In " << duration.count()  << " millisecondi" << std::endl;*/
 
     std::vector<double> rv;
-    V<double> v0{std::vector<double>{0,0}};
-    V<double> v1{std::vector<double>{1,0}};
-    V<double> v2{std::vector<double>{0,1}};
-    std::vector<V<double>> vs{v0,v1,v2};
-    for(int k = 0; k < 10; k++){
-        rv = random_vector_ht(vs, eng);
-        print_vector(rv);
-        std::cout << std::endl;
-    }
+    V<double> v0{std::vector<double>{1,1,1}};
+    V<double> v1{std::vector<double>{2,1,2}};
+    V<double> v2{std::vector<double>{1,2,4}};
+    V<V<double>> m{std::vector<V<double>>{v0,v1,v2}};
+    //for(int i = 0; i < m.size(); i++)
+    std::cout << det(m) << std::endl;
 
     return 0;
 }
