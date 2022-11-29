@@ -5,7 +5,7 @@
 #include <functional>
 #include <math.h>
 
-
+//slay
 /* Domande al prof:
     Quanto perdo di efficenza se metto tutto quanto con V<double> al posto di std::vector<double>?
 
