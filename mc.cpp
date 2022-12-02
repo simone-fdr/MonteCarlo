@@ -84,39 +84,63 @@ class V{
         return tmp;
     }
 
+    V<T> operator/ (T a){
+        V<T> tmp = *this;
+        for(int i = 0; i< v.size(); i++){
+            tmp.v[i] /= a;
+        }
+        return tmp;
+    }
+
     T & operator[] (int i){
-        return this->v[i];
+        return v[i];
     }
 
     T operator[] (int i) const{
-        return this->v[i];
+        return v[i];
     }
 
     int size(){
-        return this->v.size();
+        return v.size();
     }
 
     auto begin(){
-        return this->v.begin();
+        return v.begin();
     }
 
     auto end(){
-        return this->v.end();
+        return v.end();
     }
 
     template <class... Args>
     void emplace_back(Args&&... args){
-        this->v.emplace_back(args ...);
+        v.emplace_back(args ...);
     }
 
     void clear(){
-        this->v.clear();
+        v.clear();
     }
 
     void pop_back(){
-        this->v.pop_back();
+        v.pop_back();
     }
 
+    double sum(){
+        double sum = 0;
+        for(int i = 0; i < size(); i++){
+            sum += v[i];
+        }
+        return sum;
+    }
+
+    double norm(){
+        double norm = 0;
+        for(int i = 0; i < size(); i++){
+            norm += v[i] * v[i];
+        }
+        return norm;
+    }
+    // I might generalize the former 2 methods with "norm_p(int p)", but it is not useful
 };
 
 void print_vector(std::vector<double> x){
@@ -131,16 +155,6 @@ void print_vector(V<double> x){
         std::cout << " " << el;
     }
     std::cout << std::endl;
-}
-
-//! @param v vector
-//! @return the 2-norm of a vector
-double norm_vector(V<double> v){
-    double norm = 0;
-    for(int i = 0; i < v.size(); i++){
-        norm += v[i] * v[i];
-    }
-    return norm; 
 }
 
 //! @param m matrix
@@ -206,7 +220,7 @@ V<double> random_vector_hs(V<double> c, double r, std::default_random_engine &en
     for(int i = 0; i < c.size(); i++){
         rv.emplace_back(dis(eng));
     }
-    double norm = norm_vector(rv);
+    double norm = rv.norm();
     for(int i = 0; i < c.size(); i++){
         rv[i] = rv[i] * r / norm + c[i];
     }
@@ -241,7 +255,7 @@ V<double> random_vector_hb_inefficient(V<double> c, double r, std::default_rando
         for(int i = 0; i < c.size(); i++){
             rv.emplace_back(dis(eng));
         }
-    }while(norm_vector(rv) > 1.);
+    }while(rv.norm() > 1.);
     for(int i = 0; i < c.size(); i++){
         rv[i] = rv[i] * r + c[i];
     }
@@ -326,28 +340,27 @@ V<double> random_vector_ht(std::vector<V<double>> vs, std::default_random_engine
 }
 
 
-// ============================ HYPER POLYTOPES ======================
+// ============================ HYPER CONVEX POLYTOPES ======================
 
-// TODO Implement division of polytopes in simplexes
-// insight: By bycentric subdivision divide the polytopes in simpleces and then pick an element from them
+// TODO use Polytopes representation's theorem
 
-/*
-// It takes the vertices of a convex polytope and returns a vector of simplex recursively
-std::vector<std::vector<V<double>>> simplexes(std::vector<V<double>> vs){
-    std::vector<std::vector<V<double>>> simplexes;
-    if(vs.size() == 0){
-        std::cout << "Error, no vector passed" << std::endl;
-        return;
+// Idk if it is uniform distribuition
+V<double> random_vector_hcp(std::vector<V<double>> vs, std::default_random_engine &eng){
+    //Convex combination
+    V<double> rv(vs[0].size(), 0);
+    std::uniform_real_distribution<double> dis{0,1};
+    V<double> lambda;
+    for(int i = 0; i < vs.size(); i++){
+        lambda.emplace_back(dis(eng));
     }
-    int dim = vs[0].size()
-    if(vs.size() == 1){
+    double sum = lambda.sum();
+    for(int i = 0; i < vs.size(); i++){
+        lambda[i] /= sum;
+        rv += (vs[i] * lambda[i]);
+    }
+    return rv;
+}
 
-    }
-    if(vs.size() == 2){
- 
-    }
-};
-*/
 
 
 // ======================== MONTECARLO INTEGRALS ===================
@@ -406,7 +419,7 @@ int main(int argc, char ** argv){
         return r;
     };
 
-    V<double> center{3, 4, 5};
+    /*V<double> center{3, 4, 5};
     double radius = 2;
     
     auto start = std::chrono::high_resolution_clock::now();
@@ -414,7 +427,12 @@ int main(int argc, char ** argv){
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);  
     std::cout << "The result is " << integral << std::endl;
-    std::cout << "In " << duration.count()  << " milliseconds" << std::endl;
+    std::cout << "In " << duration.count()  << " milliseconds" << std::endl;*/
+
+    std::vector<V<double>> vertices{std::vector<double>{1,1},std::vector<double>{2,3},std::vector<double>{4,4},std::vector<double>{3,0}};
+    for(int i = 0; i < 10; i++){
+        print_vector(random_vector_hcp(vertices,eng));
+    }
 
     return 0;
 }
