@@ -2,6 +2,7 @@
 #define V_HPP
 
 #include <vector>
+#include <iostream>
 
 //Template classes cannot be initialized outside of header
 

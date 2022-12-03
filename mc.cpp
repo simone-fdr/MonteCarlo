@@ -5,6 +5,7 @@
 #include <functional>
 #include <math.h>
 #include "V.hpp"
+#include "RandomVector.hpp"
 
 // Everything is done with doubles for simplicity, but can be done with templates 
 
@@ -44,37 +45,6 @@ double det(V<V<double>> m){
     return det;
 }
 // ============== HYPER RECTANGLE ===================
-
-// Create an hyper rectangle distribution
-//! @param boundaries in pairs [a1,b1,a2,b2,...,an,bn]
-//! @return vector of distributions of size n
-std::vector<std::uniform_real_distribution<double>> generate_hr_dist(std::vector<double> &boundaries){
-    std::vector<std::uniform_real_distribution<double>> hr_dis; // Vettore di distribuzioni grande n
-    for(int i = 0; i < boundaries.size(); i+=2){
-        hr_dis.emplace_back(std::uniform_real_distribution<double>(boundaries[i], boundaries[i+1]));
-    }
-    return hr_dis;
-}
-
-// Returns a single random vector within an hyper rectangle
-//! @param hr_dist vector of distributions
-//! @return random vector of size n inside
-V<double> random_vector_hr(std::vector<std::uniform_real_distribution<double>> &hr_dis, std::default_random_engine &eng){
-    V<double> rv; //random vector
-    for(int i = 0; i < hr_dis.size(); i++){
-        rv.emplace_back(hr_dis[i](eng));
-    }
-    return rv;
-}
-
-//! @param boundaries of the hyperrectangle
-//! @return hypervolume of hyperrectangle
-double hr_hv(std::vector<double> &boundaries){
-    double hv = 1;
-    for(int i = 0; i < boundaries.size(); i+=2)
-        hv *= (boundaries[i+1] - boundaries[i]);
-    return hv;
-}
 
 // ================== HYPER BALL =======================
 
@@ -239,11 +209,11 @@ V<double> random_vector_hcp(std::vector<V<double>> vs, std::default_random_engin
 //! @param eng engine for random numbers
 double MonteCarlo_integral_hr(std::function<double (V<double>)> const &f, std::vector<double> &boundaries,
                              int sample_size, std::default_random_engine &eng){
-    std::vector<std::uniform_real_distribution<double>> hr_dis = generate_hr_dist(boundaries);
-    double area = hr_hv(boundaries);
+    HyperRectangle hyperRectangle(boundaries, eng); // TODO change seed
+    double area = hyperRectangle.getVolume();
     double value;
     for(int i = 0; i < sample_size; i++){
-        value += f(random_vector_hr(hr_dis, eng));
+        value += f(hyperRectangle.generateRandomVector());
     }
     value = value * area / sample_size;
     return value;
@@ -287,6 +257,8 @@ int main(int argc, char ** argv){
         return r;
     };
 
+
+
     /*V<double> center{3, 4, 5};
     double radius = 2;
     
@@ -297,10 +269,6 @@ int main(int argc, char ** argv){
     std::cout << "The result is " << integral << std::endl;
     std::cout << "In " << duration.count()  << " milliseconds" << std::endl;*/
 
-    std::vector<V<double>> vertices{std::vector<double>{1,1},std::vector<double>{2,3},std::vector<double>{4,4},std::vector<double>{3,0}};
-    for(int i = 0; i < 10; i++){
-        print_vector(random_vector_hcp(vertices,eng));
-    }
 
     return 0;
 }
