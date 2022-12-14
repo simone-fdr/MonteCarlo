@@ -12,7 +12,7 @@
 //! @param f is the function to integrate
 //! @param domain of integration
 //! @param sample_size iterations
-double MonteCarlo_integral(std::function<double (V<double>)> const &f, Geometry domain ,int sample_size){
+double MonteCarlo_integral(std::function<double (V<double>)> const &f, Geometry const & domain ,int sample_size){
     double volume = domain.getVolume();
     double value;
     for(int i = 0; i < sample_size; i++){

@@ -6,17 +6,19 @@
 #include "V.hpp"
 
 class Geometry{
-    public Geometry(){}
-    V<double> generateRandomVector() = 0;
-    double getVolume() = 0;
-}
+  public:
+  Geometry(){}
+    virtual V<double> generateRandomVector() = 0;
+    virtual double getVolume() = 0;
+    virtual ~Geometry()=default;
+};
 
 class HyperRectangle : Geometry{
     public:
     // Create an hyper rectangle distribution and fills distributions
     //! @param engine_ to initialize engine
     //! @param boundaries_ in pairs [a1,b1,a2,b2,...,an,bn]
-    HyperRectangle(std::vector<double> boundaries_, std::default_random_engine engine_);
+    HyperRectangle(std::vector<double> const & boundaries_, std::default_random_engine engine_);
     // Returns a single random vector within an hyper rectangle
     //! @param hr_dist vector of distributions
     //! @return random vector of size n inside

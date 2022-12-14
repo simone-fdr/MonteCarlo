@@ -3,7 +3,7 @@
 // RECTANGLE ===========================================
 
 // TODO Check whether is right or not to pass the engine 
-HyperRectangle::HyperRectangle(std::vector<double> boundaries_, std::default_random_engine engine_): boundaries{boundaries_}, engine{engine_}{
+HyperRectangle::HyperRectangle(std::vector<double> const & boundaries_, std::default_random_engine engine_): boundaries{boundaries_}, engine{engine_}{
     for(int i = 0; i < boundaries.size(); i+=2){
         distribuitions.emplace_back(std::uniform_real_distribution<double>(boundaries[i], boundaries[i+1]));
     }
