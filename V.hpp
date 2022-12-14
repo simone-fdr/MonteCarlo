@@ -11,11 +11,11 @@ class V{
     public: 
     std::vector<T> v;
     
-    V<T>() {}
+    V<T>()=default;
 
     V<T>(std::vector<T> _v): v{_v} {}
 
-    V<T>(std::initializer_list<T> _v): v{_v} {}
+    V<T>(std::initializer_list<T> const & _v): v{_v} {}
 
     V<T>(int size, T value){
         v = std::vector<T>(size,value);
@@ -146,7 +146,7 @@ class V{
     }
     // I might generalize the former 2 methods with "norm_p(int p)", but it is not useful
 
-    double print(){
+    void print(){
         for(auto el : v){
         std::cout << " " << el;
     }

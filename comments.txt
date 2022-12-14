@@ -1,0 +1,31 @@
+1 I note that often (you are not the only one) you create a source file without a header file for the (pure) declarations.
+This is not good because it makes you code less reusable. You may ave different compilation units that uses facilities defined in a source
+file, and those compilation units normally include the header file with the declarations. In your case mc.cpp is without mc.hpp
+
+2 It is better take te habit of passing potentially big objects as (possibly const) references and not by value. You avoid the risk of
+useless copies. See the chenges made in RandomVector.[hc]pp (even if in this case the vector is not big, so there is no much gain).
+
+3. prefer the new syntax
+
+    V<T>()=default;
+
+to 
+
+    V<T>() {};
+    
+It makes the code clearer. Nice the constructor with an initializer_list!
+
+4.    double print() does not return anything. I have changed it in void print()
+
+5. If you want to use polymorpism you need to use either pointers or references. If ou pass the base
+class object by value you do not apply polymorphism. In Montecarlo_integral references are better and simpler:
+
+
+Geometry domain  should be changed in -> Geometry const & domain 
+
+6. Moreover virtual methods should be declared as such, and the base class should have a virtual destructor.
+
+
+
+
+
