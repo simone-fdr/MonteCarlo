@@ -145,6 +145,13 @@ class V{
         return norm;
     }
     // I might generalize the former 2 methods with "norm_p(int p)", but it is not useful
+
+    double print(){
+        for(auto el : v){
+        std::cout << " " << el;
+    }
+    std::cout << std::endl;
+    }
 };
 
 #endif
