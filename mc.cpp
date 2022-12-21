@@ -30,7 +30,7 @@ void test_rectangle(int sample_size, std::default_random_engine eng){
         return r;
     };
 
-    std::vector<double> boundaries{0, 1, 0, 1, 0, 1};
+    std::vector<double> boundaries{0, 1, 0, 1, 0, 1, 0, 1};
 
     HyperRectangle rect(boundaries, eng);
 
@@ -39,7 +39,7 @@ void test_rectangle(int sample_size, std::default_random_engine eng){
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);  
     std::cout << "The result is " << integral << std::endl;
-    std::cout << "Expected was " << "1.5" << std::endl;
+    std::cout << "Expected was " << boundaries.size()/4.0 << std::endl;
     std::cout << "In " << duration.count()  << " milliseconds" << std::endl;
 }
 
@@ -51,7 +51,7 @@ void test_ball(int sample_size, std::default_random_engine eng){
         }
         return std::exp(exponent);
     };
-    V<double> center{0, 0, 0, 0};
+    V<double> center{0, 0};
     double radius = 3;
     
     HyperBall sphere(center,radius, eng);
