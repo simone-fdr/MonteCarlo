@@ -73,7 +73,7 @@ void test_ball(int sample_size, std::default_random_engine eng){
 int main(int argc, char ** argv){
 
     if(argc != 2){
-        std::cout << "./integration #sample" << std::endl;
+        std::cout << "Please run the executable with the number of samples as argument\n./nameExecutable #sample" << std::endl;
         return 0;
     }
     int sample_size = std::atoi(argv[1]);
